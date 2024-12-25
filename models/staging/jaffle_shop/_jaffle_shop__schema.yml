@@ -1,0 +1,45 @@
+version: 2
+
+sources:
+  - name: _jaffle_shop
+    description: one unique customer per row
+    database: raw
+    schema: jaffle_shop
+    tables:
+      - name: customers 
+        columns:
+          - name: customer_id
+            description: primary key
+        tests:
+             - unique
+             - not_null
+          
+      - name: orders
+        description: one order per row
+        loaded_at_field: _etl_loaded_at
+        freshness:
+          warn_after: {count: 12, period: hour}
+          error_after: {count: 24, period: hour}
+        columns:
+          - name: order_id
+            description: primary key
+        tests:
+          - unique
+          - not_null
+      - name: status
+        description: '{{ doc("order_status") }}'
+        tests:
+          - accepted_values:
+              values:
+                - completed
+                - shipped
+                - returned
+                - placed
+                - return_pending
+      - name: customer_id
+        description: Foreign key to stg_customers.customer_id.
+        tests:
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+        
